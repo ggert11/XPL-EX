@@ -8,7 +8,7 @@ on:
       - 'app/.gitignore'
       - '*.md'
       - 'LICENSE'
-
+  workflow_dispatch:
 
 env:
   KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -33,15 +33,12 @@ jobs:
         run: |
           echo "$KEYSTORE_BASE64" | base64 --decode > $GITHUB_WORKSPACE/KEYSTORE.JKS
 
-
       - name: Build Release APK
         run: |
-          ./gradlew clean assembleRelease 
+          ./gradlew clean assembleRelease
 
       - name: Build Debug APK
-        run: |
-          ./gradlew assembleDebug
-
+        run: ./gradlew assembleDebug
 
       - name: Find Release APK file
         id: find-release-apk
@@ -58,35 +55,6 @@ jobs:
           debug_apk_filename=$(basename "$debug_apk" .apk)
           echo "debug_apk_path=$debug_apk" >> $GITHUB_OUTPUT
           echo "debug_apk_filename=$debug_apk_filename" >> $GITHUB_OUTPUT
-
-
-      - name: Send commit info to Telegram
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHANNEL_ID}}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          message: |
-            New commit from: ${{ github.actor }}
-            Commit message: ${{ github.event.commits[0].message }}
-            
-            Changes: https://github.com/${{ github.repository }}/commit/${{github.sha}}
-
-      - name: Upload Release APK to Telegram
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHANNEL_ID }}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          message: ' '
-          document: ${{ steps.find-release-apk.outputs.release_apk_path }}
-
-      - name: Upload Debug APK to Telegram
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHANNEL_ID }}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          message: ' '
-          document: ${{ steps.find-debug-apk.outputs.debug_apk_path }}
-
 
       - name: Upload Release files to Artifacts
         uses: actions/upload-artifact@v4
