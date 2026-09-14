@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
 
 env:
-  KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-  KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-  KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+  KEYSTORE_PASSWORD: MyPass123
+  KEY_ALIAS: xplkey
+  KEY_PASSWORD: MyPass123
 
 jobs:
   build:
@@ -27,11 +27,11 @@ jobs:
           distribution: 'corretto'
           java-version: '11'
 
-      - name: Decode the Keystore
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      - name: Create Keystore
         run: |
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode -i > $GITHUB_WORKSPACE/KEYSTORE.JKS
+          keytool -genkeypair -keystore $GITHUB_WORKSPACE/KEYSTORE.JKS \
+            -keyalg RSA -keysize 2048 -validity 10000 -alias xplkey \
+            -storepass MyPass123 -keypass MyPass123 -dname "CN=XPL Self"
           ls -la $GITHUB_WORKSPACE/KEYSTORE.JKS
 
       - name: Build Release APK
@@ -71,6 +71,3 @@ jobs:
         with:
           name: ${{ steps.find-debug-apk.outputs.debug_apk_filename }}
           path: app/build/outputs/apk/debug/
-
-
-          
